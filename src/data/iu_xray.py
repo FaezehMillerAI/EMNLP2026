@@ -10,12 +10,12 @@ from src.utils.labels import extract_concepts
 
 
 class IUXrayDataset(Dataset):
-    def __init__(self, jsonl_path, vocab, max_len=300, image_size=224):
+    def __init__(self, jsonl_path, tokenizer, max_len=300, image_size=224):
         self.items = []
         with open(jsonl_path, "r") as f:
             for line in f:
                 self.items.append(json.loads(line))
-        self.vocab = vocab
+        self.tokenizer = tokenizer
         self.max_len = max_len
         self.transform = transforms.Compose(
             [
@@ -33,7 +33,7 @@ class IUXrayDataset(Dataset):
         img = Image.open(item["image"]).convert("RGB")
         img = self.transform(img)
         text = item["report"]
-        ids = torch.tensor(self.vocab.encode(text, self.max_len), dtype=torch.long)
+        ids = torch.tensor(self.tokenizer.encode(text, self.max_len), dtype=torch.long)
         concepts = extract_concepts(text)
         return {
             "image": img,
@@ -41,4 +41,3 @@ class IUXrayDataset(Dataset):
             "input_ids": ids,
             "concepts": concepts,
         }
-
