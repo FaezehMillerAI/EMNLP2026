@@ -5,6 +5,7 @@ import random
 from pathlib import Path
 
 import pandas as pd
+from tqdm import tqdm
 
 
 def pick_frontal(proj_df, uid):
@@ -33,7 +34,7 @@ def main():
     projections = pd.read_csv(raw / "indiana_projections.csv")
 
     items = []
-    for _, row in reports.iterrows():
+    for _, row in tqdm(reports.iterrows(), total=len(reports), desc="Building items"):
         uid = row["uid"]
         findings = str(row.get("findings", ""))
         impression = str(row.get("impression", ""))
@@ -69,4 +70,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
