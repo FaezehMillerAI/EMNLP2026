@@ -5,10 +5,12 @@ from pathlib import Path
 import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+import numpy as np
 
 from src.data.iu_xray import IUXrayDataset
 from src.explainability.evidence import concept_evidence
 from src.explainability.counterfactual import counterfactual_concept_influence
+from src.explainability.graph_trace import top_concept_edges
 from src.metrics.nlp import compute_bleu, compute_meteor, compute_rouge, compute_distinct
 from src.metrics.clinical import precision_recall_f1
 from src.models.model import XAIReportModel
@@ -38,7 +40,7 @@ def main():
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = XAIReportModel(
-        vocab_size=len(vocab.itos),
+        vocab_size=getattr(vocab, "tok", None).vocab_size if hasattr(vocab, "tok") else len(vocab.itos),
         d_model=cfg["model"]["d_model"],
         nhead=cfg["model"]["nhead"],
         num_layers=cfg["model"]["num_layers"],
@@ -46,6 +48,10 @@ def main():
         dropout=cfg["model"]["dropout"],
         max_len=cfg["model"]["max_len"],
         encoder_name=cfg["model"]["encoder_name"],
+        decoder_type=cfg["model"].get("decoder_type", "basic"),
+        pretrained_lm=cfg["model"].get("pretrained_lm", "gpt2"),
+        use_concept_graph=cfg["model"].get("use_concept_graph", True),
+        concept_graph_path=cfg["model"].get("concept_graph_path"),
     ).to(device)
     model.load_state_dict(torch.load(args.checkpoint, map_location=device)["model"])
     model.eval()
@@ -53,6 +59,10 @@ def main():
     refs, hyps = [], []
     qual_dir = out_dir / "qualitative"
     qual_dir.mkdir(exist_ok=True)
+    adj = None
+    graph_path = cfg["model"].get("concept_graph_path")
+    if cfg["model"].get("use_concept_graph", True) and graph_path and Path(graph_path).exists():
+        adj = np.load(graph_path)
 
     sample_count = 0
     for batch in tqdm(loader, desc="eval"):
@@ -67,7 +77,7 @@ def main():
             hyps.append(hyp)
 
             if sample_count < args.qual_n:
-                top_concepts, _ = concept_evidence(concept_logits[i].cpu(), topk=cfg["explainability"]["topk_concepts"])
+                top_concepts, all_concepts = concept_evidence(concept_logits[i].cpu(), topk=cfg["explainability"]["topk_concepts"])
                 deltas_top, _ = counterfactual_concept_influence(
                     model,
                     images[i : i + 1],
@@ -75,9 +85,13 @@ def main():
                     vocab,
                     topk=cfg["explainability"]["counterfactual_k"],
                 )
+                edges_top = None
+                if adj is not None:
+                    probs = torch.sigmoid(concept_logits[i]).detach().cpu().numpy()
+                    edges_top = top_concept_edges(adj, probs, topk=5, prob_thresh=0.3)
                 image_path = ds.items[sample_count]["image"]
                 out_path = qual_dir / f"sample_{sample_count}.png"
-                save_report_card(image_path, ref, hyp, top_concepts, deltas_top, out_path)
+                save_report_card(image_path, ref, hyp, top_concepts, deltas_top, out_path, edges_top=edges_top)
                 sample_count += 1
 
     metrics = {}
@@ -93,4 +107,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
