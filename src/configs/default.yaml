@@ -1,0 +1,36 @@
+seed: 123
+
+paths:
+  raw_dir: data/raw/iu-xray
+  processed_dir: data/processed
+  output_dir: outputs
+
+model:
+  d_model: 256
+  nhead: 4
+  num_layers: 3
+  dim_feedforward: 512
+  dropout: 0.1
+  max_len: 300
+  vocab_min_freq: 3
+  encoder_name: resnet50
+
+train:
+  epochs: 12
+  batch_size: 8
+  lr: 3.0e-4
+  weight_decay: 1.0e-4
+  grad_clip: 1.0
+  label_smoothing: 0.1
+  max_steps: null
+
+explainability:
+  topk_concepts: 6
+  counterfactual_k: 4
+
+metrics:
+  use_meteor: true
+  use_rouge: true
+  use_bleu: true
+  use_distinct: true
+
