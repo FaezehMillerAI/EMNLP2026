@@ -10,3 +10,4 @@ scikit-learn
 matplotlib
 Pillow
 kaggle
+transformers>=4.39
