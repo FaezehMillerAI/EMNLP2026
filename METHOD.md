@@ -7,15 +7,16 @@ C3XR keeps the dual-path spirit of Nesy-Gen but removes heavy graph reasoning an
 1. **Vision Encoder**: ResNet backbone producing spatial features.
 2. **Concept Bottleneck**: Multi-label prediction of clinically meaningful concepts (CheXpert-14). This creates a human-interpretable evidence layer.
 3. **Concept-Conditioned Decoder**: Transformer decoder conditioned on both visual features and concept embeddings.
-4. **Counterfactual Explainer**: For each concept token, remove it from memory and measure the drop in report log-likelihood to quantify its causal influence on the generated report.
+4. **Compact Concept Graph Encoder**: A lightweight co-occurrence graph over CheXpert concepts refines concept embeddings with a single GCN layer, enabling richer evidence traces without heavy KG reasoning.
+5. **Counterfactual Explainer**: For each concept token, remove it from memory and measure the drop in report log-likelihood to quantify its causal influence on the generated report.
 
 ## Explanation Artifacts
 - **Concept Evidence Table**: Probabilities of clinically relevant concepts.
 - **Counterfactual Influence**: Per-concept influence score (LL drop).
+- **Graph Traces**: Top weighted concept-concept edges for each case.
 - **Qualitative Report Cards**: Image + concept evidence + counterfactual influence + generated vs reference report.
 
 ## Why This Is Explainable Without Heatmaps
 - Explanations are discrete, clinical concepts.
 - Counterfactual influence gives causal attribution without pixel saliency.
 - Outputs are human-readable and auditable for medical validation.
-
