@@ -3,7 +3,7 @@ import numpy as np
 from PIL import Image
 
 
-def save_report_card(image_path, report_ref, report_pred, concepts_top, deltas_top, out_path):
+def save_report_card(image_path, report_ref, report_pred, concepts_top, deltas_top, out_path, edges_top=None):
     img = Image.open(image_path).convert("RGB")
 
     fig = plt.figure(figsize=(10, 12))
@@ -27,10 +27,12 @@ def save_report_card(image_path, report_ref, report_pred, concepts_top, deltas_t
     ax2.barh(labels2[::-1], vals2[::-1], color="#8b0000")
     ax2.set_title("Counterfactual Influence (LL drop)")
 
-    text = "Reference:\n" + report_ref + "\n\nGenerated:\n" + report_pred
+    edges_text = ""
+    if edges_top:
+        edges_text = "\n\nGraph Trace (top edges):\n" + "\n".join([f"{a} -> {b} ({w:.2f})" for a, b, w in edges_top])
+    text = "Reference:\n" + report_ref + "\n\nGenerated:\n" + report_pred + edges_text
     fig.text(0.02, 0.02, text, fontsize=9, va="bottom", ha="left", wrap=True)
 
     fig.tight_layout(rect=[0, 0.08, 1, 1])
     fig.savefig(out_path, dpi=150)
     plt.close(fig)
-
