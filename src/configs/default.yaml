@@ -14,6 +14,10 @@ model:
   max_len: 300
   vocab_min_freq: 3
   encoder_name: resnet50
+  decoder_type: basic   # basic | gpt2
+  pretrained_lm: gpt2   # used when decoder_type=gpt2
+  use_concept_graph: true
+  concept_graph_path: data/processed/concept_graph.npy
 
 train:
   epochs: 12
@@ -33,4 +37,3 @@ metrics:
   use_rouge: true
   use_bleu: true
   use_distinct: true
-
