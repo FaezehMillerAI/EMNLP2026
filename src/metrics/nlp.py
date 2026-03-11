@@ -11,6 +11,10 @@ SMOOTH = SmoothingFunction().method3
 
 def _ensure_nltk():
     try:
+        nltk.data.find("tokenizers/punkt")
+    except LookupError:
+        nltk.download("punkt", quiet=True)
+    try:
         nltk.data.find("corpora/wordnet")
     except LookupError:
         nltk.download("wordnet", quiet=True)
@@ -35,7 +39,11 @@ def compute_bleu(refs, hyps):
 
 def compute_meteor(refs, hyps):
     _ensure_nltk()
-    scores = [meteor_score([r], h) for r, h in zip(refs, hyps)]
+    scores = []
+    for r, h in zip(refs, hyps):
+        r_tok = nltk.word_tokenize(r)
+        h_tok = nltk.word_tokenize(h)
+        scores.append(meteor_score([r_tok], h_tok))
     return {"meteor": sum(scores) / max(1, len(scores))}
 
 
