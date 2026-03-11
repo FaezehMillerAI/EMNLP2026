@@ -52,3 +52,25 @@ class Vocab:
             tokens.append(t)
         return " ".join(tokens).replace(" ,", ",").replace(" .", ".")
 
+
+class HFTokenizerWrapper:
+    def __init__(self, hf_tokenizer, max_len=300):
+        self.tok = hf_tokenizer
+        self.max_len = max_len
+        self.pad_id = self.tok.pad_token_id
+        self.bos_id = self.tok.bos_token_id
+        self.eos_id = self.tok.eos_token_id
+
+    def encode(self, text, max_len=None):
+        max_len = max_len or self.max_len
+        enc = self.tok(
+            text,
+            truncation=True,
+            max_length=max_len,
+            padding="max_length",
+            return_tensors=None,
+        )
+        return enc["input_ids"]
+
+    def decode(self, ids):
+        return self.tok.decode(ids, skip_special_tokens=True)
